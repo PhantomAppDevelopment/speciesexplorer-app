@@ -1,4 +1,4 @@
-# species Explorer
+# Species Explorer
 ## Mobile App built with Apache Flex 4.14.0 and Adobe AIR 16
 
 Species Explorer is an app that uses various web services to dynamically load information and media about a given animal, insect, fish, bird, etc.

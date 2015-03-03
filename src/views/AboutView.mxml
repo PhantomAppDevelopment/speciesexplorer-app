@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark" title="About Species Explorer">
+	
+	<s:navigationContent>
+		<s:Button click="navigator.popView()">
+			<s:icon>
+				<s:MultiDPIBitmapSource source160dpi="@Embed('assets/icons/160/1_navigation_previous_item.png')"
+										source240dpi="@Embed('assets/icons/240/1_navigation_previous_item.png')"
+										source320dpi="@Embed('assets/icons/320/1_navigation_previous_item.png')"/>
+			</s:icon>
+		</s:Button>
+	</s:navigationContent>
+	
+	<s:Rect left="10" right="10" top="10" bottom="10" radiusX="5" radiusY="5">
+		<s:fill>
+			<s:SolidColor color="#FFFFFF"/>
+		</s:fill>
+	</s:Rect>
+	
+	<s:Scroller left="20" right="20" top="20" bottom="20">
+		<s:VGroup>
+			<s:Spacer height="10" width="10"/>
+			<s:Label text="Phantom App Development - 2015"/>
+			<s:Label text="http://phantom.im"/>
+			<s:Spacer height="10" width="10"/>
+			<s:Label text="This application uses the following APIs and Webservices:" width="100%"/>
+			<s:Spacer height="10" width="10"/>
+			<s:Label text="GBIF API"/>
+			<s:Label text="Wikipedia API"/>
+			<s:Label text="Flickr API"/>
+			<s:Label text="Youtube API"/>
+			<s:Spacer height="10" width="10"/>
+			<s:Label width="100%" text="This is a free application, if you got charged for it demand a refund."/>
+		</s:VGroup>
+	</s:Scroller>
+</s:View>

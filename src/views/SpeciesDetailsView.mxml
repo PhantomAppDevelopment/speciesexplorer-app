@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark" viewActivate="init(event)" destructionPolicy="never">
+	<fx:Script>
+		<![CDATA[
+			import mx.events.FlexEvent;
+			import mx.events.PropertyChangeEvent;
+			import mx.rpc.events.ResultEvent;
+			
+			import spark.components.Label;
+			import spark.components.supportClasses.StyleableTextField;
+			import spark.events.IndexChangeEvent;
+			import spark.events.ViewNavigatorEvent;
+			
+			private static const flickrapikey:String = "Copy here your Flickr API key";
+			public var startIndex:int;
+			public var loading:Boolean;
+			public var months:Object = new Object();
+			public var commonName:String;
+			
+			protected function init(event:ViewNavigatorEvent):void
+			{
+				months["01"] = "January";
+				months["02"] = "February";
+				months["03"] = "March";
+				months["04"] = "April";
+				months["05"] = "May";
+				months["06"] = "June";
+				months["07"] = "July";
+				months["08"] = "August";
+				months["09"] = "September";
+				months["10"] = "October";
+				months["11"] = "November";
+				months["12"] = "December";
+				
+				if(data.vernacularNames == ""){
+					commonName = data.canonicalName;
+				} else {
+					commonName = data.vernacularNames[0].vernacularName;
+				}
+				
+				commonName = commonName.toLocaleLowerCase();
+				
+				title = commonName;
+				
+				wikiService.url = "http://en.wikipedia.org/w/api.php?action=query&prop=extracts&continue=&format=xml&titles="+commonName;
+				wikiService.send();
+				
+			}
+			
+			private function changeState(stateName:String):void{
+				currentState = stateName;
+			}
+			
+						
+			protected function wikiResult(event:ResultEvent):void
+			{
+				if(event.result.query.pages.page.extract == ""){
+					summaryTxt.text = "There's no information available for this species.";
+				} else if(event.result.query.pages.page.extract == undefined){
+					summaryTxt.text = "There's no information available for this species.";				
+				} else {				
+					StyleableTextField(summaryTxt.textDisplay).htmlText = event.result.query.pages.page.extract;
+					summaryTxt.skin.invalidateSize();
+				}
+			}
+			
+			protected function enterSummary(event:FlexEvent):void
+			{
+				whiteRect0.visible = true;
+				whiteRect1.visible = false;
+				whiteRect2.visible = false;
+				whiteRect3.visible = false;
+			}
+			
+			protected function enterClassification(event:FlexEvent):void
+			{
+				whiteRect0.visible = false;
+				whiteRect1.visible = true;
+				whiteRect2.visible = false;
+				whiteRect3.visible = false;
+				
+				speciesKingdom.text = data.kingdom;
+				speciesPhylum.text = data.phylum;
+				speciesClass.text = data["class"];
+				speciesOrder.text = data.order;
+				speciesFamily.text = data.family;
+				speciesGenus.text = data.genus;
+				speciesSpecies.text = data.species;
+			}
+			
+			
+			protected function imagesServiceResult(event:ResultEvent):void
+			{
+				photoList.dataProvider = event.result.rsp.photos.photo;
+			}
+			
+			protected function showLargeImage(event:IndexChangeEvent):void
+			{
+				bigPhotoGroup.visible = true;
+			}
+			
+			protected function enterImages(event:FlexEvent):void
+			{
+				whiteRect0.visible = false;
+				whiteRect1.visible = false;
+				whiteRect2.visible = true;
+				whiteRect3.visible = false;
+				
+				imagesService.url = "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key="+flickrapikey+"&text="+commonName+"&sort=relevance&format=rest";
+				imagesService.send();
+			}
+			
+			protected function enterVideos(event:FlexEvent):void
+			{
+				whiteRect0.visible = false;
+				whiteRect0.visible = false;
+				whiteRect2.visible = false;
+				whiteRect3.visible = true;
+				
+				startIndex = 1;
+				videosService.url = "https://gdata.youtube.com/feeds/api/videos?q="+commonName+"&max-results=20&v=2&start-index="+startIndex;
+				videosService.send();
+			}
+			
+			
+			
+			protected function videosResult(event:ResultEvent):void
+			{
+				if(videosList.dataProvider == null){
+					videosList.dataProvider = event.result.feed.entry;
+				} else {
+					for each ( var item : * in event.result.feed.entry){
+						videosList.dataProvider.addItem(item);
+					}
+				}
+				
+				loading = false;
+				
+			}
+			
+			protected function videosList_creationCompleteHandler(event:FlexEvent):void
+			{
+				videosList.scroller.viewport.addEventListener(PropertyChangeEvent.PROPERTY_CHANGE, propertyChangeHandler);
+			}
+			
+			protected function propertyChangeHandler( event : PropertyChangeEvent):void {
+				if(event.property == "verticalScrollPosition"){
+					if(event.newValue == ( event.currentTarget.measuredHeight - event.currentTarget.height)){
+						loadMore();
+					}
+				}
+			}
+						
+			public function loadMore():void{
+				trace("loading");
+				if(!loading){
+		//			myBusy.visible = true;
+					loading = true;
+					startIndex+=20;
+					videosService.url = "https://gdata.youtube.com/feeds/api/videos?q="+commonName+"&max-results=20&v=2&start-index="+startIndex;
+					videosService.send();
+				}
+			}
+			
+			protected function playVideo(event:IndexChangeEvent):void
+			{
+				var myObject:Object = new Object();
+				myObject.title = videosList.selectedItem.title;
+				myObject.url = videosList.selectedItem.group.videoid;
+				navigator.pushView(VideoDetails, myObject);
+			}
+			
+			private function customSearch(searchTerm:String, searchType:String):void{
+				var myObject:Object = new Object();
+				myObject.searchTerm = searchTerm;
+				myObject.type = searchTerm;
+				myObject.canonicalName = data.canonicalName;
+				navigator.pushView(CustomSearchView, myObject);
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<s:HTTPService id="wikiService" resultFormat="e4x" result="wikiResult(event)"/>
+		<s:HTTPService id="imagesService" result="imagesServiceResult(event)"/>
+		<s:HTTPService id="videosService" result="videosResult(event)"/>
+	</fx:Declarations>
+	
+	<s:states>
+		<s:State name="SummaryState" enterState="enterSummary(event)"/>
+		<s:State name="ClassificationState" enterState="enterClassification(event)"/>
+		<s:State name="ImagesState" enterState="enterImages(event)"/>
+		<s:State name="VideosState" enterState="enterVideos(event)"/>
+	</s:states>
+
+	<s:navigationContent>
+		<s:Button click="navigator.popView()">
+			<s:icon>
+				<s:MultiDPIBitmapSource source160dpi="@Embed('assets/icons/160/1_navigation_previous_item.png')"
+										source240dpi="@Embed('assets/icons/240/1_navigation_previous_item.png')"
+										source320dpi="@Embed('assets/icons/320/1_navigation_previous_item.png')"/>
+			</s:icon>
+		</s:Button>
+	</s:navigationContent>
+	
+	<s:Rect width="100%" height="50" top="0">
+		<s:fill>
+			<s:LinearGradient rotation="90">
+				<s:entries>
+					<s:GradientEntry color="#333333"/>
+					<s:GradientEntry color="#000000"/>
+				</s:entries>
+			</s:LinearGradient>
+		</s:fill>
+	</s:Rect>
+	
+	<s:Rect left="10" right="10" top="65" bottom="10" radiusX="10" radiusY="10">
+		<s:fill>
+			<s:SolidColor color="#FFFFFF"/>
+		</s:fill>
+	</s:Rect>
+	
+	<s:HGroup id="mainButtonbar" width="100%" top="0" height="50" gap="0" columnWidth="{mainButtonbar.width/4}" verticalAlign="middle">
+		<s:Group click="changeState('SummaryState')" width="100%" height="100%">
+			<s:BitmapImage source="@Embed('assets/icons/info.png')" width="30" height="30" horizontalCenter="0" verticalCenter="0" smooth="true"/>
+			<s:Rect id="whiteRect0" visible="true" width="100%" bottom="0" height="5">
+				<s:fill>
+					<s:LinearGradient rotation="90">
+						<s:entries>
+							<s:GradientEntry color="#FFFFFF"/>
+							<s:GradientEntry color="#999999"/>				
+						</s:entries>
+					</s:LinearGradient>
+				</s:fill>
+			</s:Rect>
+		</s:Group>
+		<s:Group click="changeState('ClassificationState')" width="100%" height="100%">
+			<s:BitmapImage source="@Embed('assets/icons/classification.png')" width="30" height="30" horizontalCenter="0" verticalCenter="0" smooth="true"/>
+			<s:Rect id="whiteRect1" visible="false" width="100%" bottom="0" height="5">
+				<s:fill>
+					<s:LinearGradient rotation="90">
+						<s:entries>
+							<s:GradientEntry color="#FFFFFF"/>
+							<s:GradientEntry color="#999999"/>				
+						</s:entries>
+					</s:LinearGradient>
+				</s:fill>
+			</s:Rect>
+		</s:Group>
+		<s:Group click="changeState('ImagesState')" width="100%" height="100%">
+			<s:BitmapImage source="@Embed('assets/icons/images.png')" width="30" height="30" horizontalCenter="0" verticalCenter="0" smooth="true"/>
+			<s:Rect id="whiteRect2" visible="false" width="100%" bottom="0" height="5">
+				<s:fill>
+					<s:LinearGradient rotation="90">
+						<s:entries>
+							<s:GradientEntry color="#FFFFFF"/>
+							<s:GradientEntry color="#999999"/>				
+						</s:entries>
+					</s:LinearGradient>
+				</s:fill>
+			</s:Rect>
+		</s:Group>
+		<s:Group click="changeState('VideosState')" width="100%" height="100%">
+			<s:BitmapImage source="@Embed('assets/icons/video.png')" width="30" height="30" horizontalCenter="0" verticalCenter="0" smooth="true"/>
+			<s:Rect id="whiteRect3" visible="false" width="100%" bottom="0" height="5">
+				<s:fill>
+					<s:LinearGradient rotation="90">
+						<s:entries>
+							<s:GradientEntry color="#FFFFFF"/>
+							<s:GradientEntry color="#999999"/>				
+						</s:entries>
+					</s:LinearGradient>
+				</s:fill>
+			</s:Rect>
+		</s:Group>
+	</s:HGroup>
+	
+	<s:TextArea id="summaryTxt" skinClass="spark.skins.mobile.TextAreaSkin" left="10" right="10" top="60" bottom="10" editable="false" selectable="false" includeIn="SummaryState"/>
+		
+	<s:Scroller left="20" right="20" top="80" bottom="20" includeIn="ClassificationState">
+		<s:Group>
+			<s:VGroup left="10" gap="15">
+				<s:Label text="Kingdom:"/>				
+				<s:Label text="Phylum:"/>				
+				<s:Label text="Class:"/>				
+				<s:Label text="Order:" />				
+				<s:Label text="Family:"/>				
+				<s:Label text="Genus:"/>
+				<s:Label text="Species:"/>
+			</s:VGroup>
+			<s:VGroup right="10" gap="15" horizontalAlign="right">
+				<s:Label id="speciesKingdom" textAlign="right"/>
+				<s:Label id="speciesPhylum" textAlign="right" click="customSearch(speciesPhylum.text, 'phylum')" textDecoration="underline"/>
+				<s:Label id="speciesClass" textAlign="right" click="customSearch(speciesClass.text, 'class')" textDecoration="underline"/>
+				<s:Label id="speciesOrder" textAlign="right" click="customSearch(speciesOrder.text, 'order')" textDecoration="underline"/>
+				<s:Label id="speciesFamily" textAlign="right" click="customSearch(speciesFamily.text, 'family')" textDecoration="underline"/>
+				<s:Label id="speciesGenus" textAlign="right" click="customSearch(speciesGenus.text, 'genus')" textDecoration="underline"/>
+				<s:Label id="speciesSpecies" textAlign="right"/>
+			</s:VGroup>
+		</s:Group>
+	</s:Scroller>
+	
+	<s:List id="photoList" includeIn="ImagesState" change="showLargeImage(event)" itemRenderer="PhotoRenderer" left="20" right="20" top="80" bottom="20" contentBackgroundColor="#FFFFFF">
+		<s:layout>
+			<s:TileLayout columnAlign="justifyUsingGap" useVirtualLayout="true" />
+		</s:layout>
+	</s:List>
+	
+	<s:List includeIn="VideosState" creationComplete="videosList_creationCompleteHandler(event)" id="videosList" change="playVideo(event)" left="20" right="20" top="80" bottom="20" contentBackgroundColor="#FFFFFF">
+		<s:itemRenderer>
+			<fx:Component>
+				<s:IconItemRenderer messageStyleName="myMessageStyle" iconWidth="67" iconHeight="50" iconFunction="myIconFunction" messageFunction="myMessageFunction" labelFunction="myLabelFunction">
+					<fx:Script>
+						<![CDATA[
+							
+							public function myIconFunction(item:Object):String{		
+								return "http://i1.ytimg.com/vi/"+data.group.videoid+"/default.jpg";								
+							}
+							
+							public function myLabelFunction(item:Object):String{								
+								return data.title;
+							}
+							
+							public function myMessageFunction(item:Object):String{								
+								return data.author.name+ "\n" + outerDocument.months[data.published.slice(5,7)]+" "+data.published.slice(8,10)+", "+data.published.slice(0,4);
+							}
+							
+						]]>
+					</fx:Script>
+				</s:IconItemRenderer>
+			</fx:Component>
+		</s:itemRenderer>
+	</s:List>
+	
+	<s:Group id="bigPhotoGroup" click="{bigPhotoGroup.visible = false}" visible="false" width="100%" height="100%">
+		<s:Rect width="100%" height="100%">
+			<s:fill>
+				<s:SolidColor color="#000000" alpha=".7"/>
+			</s:fill>
+		</s:Rect>
+		<s:BitmapImage width="100%" height="100%" scaleMode="letterbox" source="{'http://farm'+photoList.selectedItem.farm+'.staticflickr.com/'+photoList.selectedItem.server+'/'+photoList.selectedItem.id+'_'+photoList.selectedItem.secret+'_z.jpg'}"/>
+	</s:Group>
+</s:View>

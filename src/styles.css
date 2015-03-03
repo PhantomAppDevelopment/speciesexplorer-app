@@ -1,0 +1,70 @@
+/* CSS file */
+@namespace s "library://ns.adobe.com/flex/spark";
+
+@font-face 
+{
+	src: url("assets/font.otf");
+	fontFamily: MyFont;
+	fontStyle: normal;
+	fontWeight: normal;
+	embedAsCFF: true;
+	advancedAntiAliasing: true;
+	
+}
+
+@font-face 
+{
+	src: url("assets/font.otf");
+	fontFamily: MyFont2;
+	fontStyle: normal;
+	fontWeight: normal;
+	embedAsCFF: falsee;
+	advancedAntiAliasing: true;
+	
+}
+
+s|ActionBar #titleDisplay{
+	textAlign: center;
+	fontWeight: normal;
+	color: #FFFFFF;
+	fontFamily: MyFont2;
+	fontSize: 16px;
+}
+
+s|ActionBar
+{
+	chromeColor: #000000;
+}
+
+s|Application
+{
+	backgroundColor: #70CF39;
+}
+
+s|View{
+	backgroundColor: #70CF39
+}
+
+s|Label{
+	color: #000000;
+}
+
+s|Button{
+	fontWeight: normal;
+	chromeColor: #52730A;
+	color: #FFFFFF;
+}
+
+s|List{
+	color: #000000;
+	alternatingItemColors: #FFFFFF;
+	contentBackgroundColor: #70CF39;
+	downColor: #70CF39;
+	symbolColor: #70CF39;
+	selectionColor: #70CF39;
+}
+
+.messateStyle{
+	fontSize: 12;
+	color: #000000;
+}

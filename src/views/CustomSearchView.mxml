@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark" destructionPolicy="never">
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayList;
+			import mx.events.FlexEvent;
+			import mx.events.PropertyChangeEvent;
+			import mx.rpc.events.ResultEvent;
+			
+			import spark.events.IndexChangeEvent;
+			
+			public var offset:int;
+			public var loading:Boolean;
+			
+			protected function init(event:FlexEvent):void
+			{
+				title = "Search results for "+data.searchTerm;
+				
+				offset = 0;
+				
+				searchService.url = "http://api.gbif.org/v1/species/search?q="+data.canonicalName+"&"+data.type+"="+data.searchTerm+"&offset="+offset+"&strict=true&limit=20&datasetKey=d7dddbf4-2cf0-4f39-9b2a-bb099caae36c";
+				searchService.send();
+			}
+			
+			protected function selectSpecies(event:IndexChangeEvent):void
+			{
+				var myObject:Object = new Object();
+				navigator.pushView(SpeciesDetailsView, speciesList.selectedItem);
+			}
+			
+			protected function speciesList_creationCompleteHandler(event:FlexEvent):void
+			{
+				speciesList.scroller.viewport.addEventListener(PropertyChangeEvent.PROPERTY_CHANGE, propertyChangeHandler);
+			}
+			
+			protected function propertyChangeHandler( event : PropertyChangeEvent):void {
+				if(event.property == "verticalScrollPosition"){
+					if(event.newValue == ( event.currentTarget.measuredHeight - event.currentTarget.height)){
+						loadMore();
+					}
+				}
+			}
+			
+			public function loadMore():void{
+				if(!loading){
+					loading = true;
+					offset+=20;
+					searchService.url = "http://api.gbif.org/v1/species/search?q="+data.canonicalName+"&"+data.type+"="+data.searchTerm+"&offset="+offset+"&strict=true&limit=20&datasetKey=d7dddbf4-2cf0-4f39-9b2a-bb099caae36c";
+					searchService.send();
+				}
+			}
+			
+			protected function searchService_resultHandler(event:ResultEvent):void
+			{
+				var rawData:Object = JSON.parse(String(event.result));
+				
+				if(speciesList.dataProvider == null){
+					speciesList.dataProvider = new ArrayList(rawData.results as Array);
+				} else {
+					for each ( var item : * in rawData.results){
+						speciesList.dataProvider.addItem(item);
+					}
+				}
+				
+				loading = false;
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<s:HTTPService id="searchService" result="searchService_resultHandler(event)" resultFormat="text"/>	
+	</fx:Declarations>
+	
+	<s:states>
+		<s:State name="MainState" enterState="init(event)"/>
+	</s:states>
+	
+	<s:navigationContent>
+		<s:Button click="navigator.popView()">
+			<s:icon>
+				<s:MultiDPIBitmapSource source160dpi="@Embed('assets/icons/160/1_navigation_previous_item.png')"
+										source240dpi="@Embed('assets/icons/240/1_navigation_previous_item.png')"
+										source320dpi="@Embed('assets/icons/320/1_navigation_previous_item.png')"/>
+			</s:icon>
+		</s:Button>
+	</s:navigationContent>
+	
+	<s:Rect left="10" right="10" top="10" bottom="10" radiusX="5" radiusY="5">
+		<s:fill>
+			<s:SolidColor  color="#FFFFFF"/>
+		</s:fill>
+	</s:Rect>
+	
+	<s:List id="speciesList" left="20" right="20" top="20" bottom="20" contentBackgroundColor="#FFFFFF"  creationComplete="speciesList_creationCompleteHandler(event)" change="selectSpecies(event)">
+		<s:itemRenderer>
+			<fx:Component>
+				<s:IconItemRenderer labelFunction="myLabelFunction" messageFunction="myMessageFunction" messageStyleName="messateStyle">
+					<s:decorator>
+						<s:MultiDPIBitmapSource source160dpi="@Embed('assets/icons/160/1_navigation_next_item.png')"
+												source240dpi="@Embed('assets/icons/240/1_navigation_next_item.png')"
+												source320dpi="@Embed('assets/icons/320/1_navigation_next_item.png')"/>
+					</s:decorator>
+					<fx:Script>
+						<![CDATA[
+							
+							private function myLabelFunction(item:Object):String{
+								if(data.vernacularNames == ""){
+									return data.canonicalName;
+								} else {
+									return data.vernacularNames[0].vernacularName;
+								}
+							}
+							
+							private function myMessageFunction(item:Object):String{
+								return data.canonicalName + "\n" + data["class"];
+							}
+						]]>
+					</fx:Script>
+				</s:IconItemRenderer>
+			</fx:Component>
+		</s:itemRenderer>
+	</s:List>
+</s:View>

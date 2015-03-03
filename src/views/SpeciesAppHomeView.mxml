@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark" title="Species Explorer">
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			
+			protected function searchSpecies(event:MouseEvent):void
+			{
+				if(myTextInput.text == ""){
+					//Do nothing
+				} else {				
+					searchService.url = "http://api.gbif.org/v1/species/search/?q="+myTextInput.text+"&limit=20&datasetKey=d7dddbf4-2cf0-4f39-9b2a-bb099caae36c";
+					searchService.send();
+				}
+			}
+			
+			protected function searchResult(event:ResultEvent):void
+			{
+				var myObject:Object = JSON.parse(String(event.result));
+				
+				if(myObject.count == 0){
+					statusTxt.text = "No records found, please try another search term.";
+					statusTxt.setStyle("color", 0xFF00000);
+				} else {
+					myObject.searchTerm = myTextInput.text;
+					navigator.pushView(SearchListView, myObject);
+				}
+			}
+			
+			protected function searchService_faultHandler(event:FaultEvent):void
+			{
+				statusTxt.text = "An error has ocurred, please try again.";
+				statusTxt.setStyle("color", 0xFF00000);
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<s:HTTPService id="searchService" resultFormat="text" result="searchResult(event)" fault="searchService_faultHandler(event)" />
+	</fx:Declarations>
+	
+	<s:actionContent>
+		<s:Button click="navigator.pushView(AboutView)">
+			<s:icon>
+				<s:MultiDPIBitmapSource source160dpi="@Embed('assets/icons/160/2_action_about.png')"
+										source240dpi="@Embed('assets/icons/240/2_action_about.png')"
+										source320dpi="@Embed('assets/icons/320/2_action_about.png')"/>
+			</s:icon>
+		</s:Button>
+	</s:actionContent>
+		
+	<s:Scroller width="100%" height="100%">
+		<s:Group left="10" right="10" top="10" bottom="10">
+			<s:Rect left="10" right="10" top="10" height="{myVGroup.height+20}" radiusX="5" radiusY="5">
+				<s:fill>
+					<s:SolidColor color="#FFFFFF"/>
+				</s:fill>
+			</s:Rect>
+		<s:VGroup id="myVGroup" top="20" left="20" right="20" >
+			<s:Label id="statusTxt" text="Enter a common or a scientific name. e.g: lion, panthera leo" width="100%"/>
+			<s:TextInput id="myTextInput" width="100%"/>
+			<s:Button label="Search" skinClass="spark.skins.mobile.ButtonSkin" width="100%" click="searchSpecies(event)"/>
+	</s:VGroup>
+		</s:Group>
+	</s:Scroller>
+			
+</s:View>

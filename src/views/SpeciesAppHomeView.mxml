@@ -63,7 +63,7 @@
 		<s:VGroup id="myVGroup" top="20" left="20" right="20" >
 			<s:Label id="statusTxt" text="Enter a common or a scientific name. e.g: lion, panthera leo" width="100%"/>
 			<s:TextInput id="myTextInput" width="100%"/>
-			<s:Button label="Search" skinClass="spark.skins.mobile.ButtonSkin" width="100%" click="searchSpecies(event)"/>
+			<s:Button label="Search" width="100%" click="searchSpecies(event)"/>
 	</s:VGroup>
 		</s:Group>
 	</s:Scroller>

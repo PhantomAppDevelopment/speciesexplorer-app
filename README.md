@@ -17,7 +17,7 @@ Some of the techniques covered are:
   - HTML text in a mobile TextArea.
   - Tab navigation.
   - Custom Font.
-  - Using StageWebView to load Youtube and Google Maps
+  - Using StageWebView to load Youtube videos.
   - Multi DPI development.
 
 To compile this application you only require a recent version of the Apache Flex and Adobe AIR SDKs.
